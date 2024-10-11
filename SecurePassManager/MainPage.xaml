@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SecurePassManager.MainPage"
+             Title="Secure Password Manager">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="25" Padding="30,0" VerticalOptions="Center">
+
+            <Image
+                Source="dotnet_bot.png"
+                SemanticProperties.Description="Cute dot net bot waving hi to you!"
+                HeightRequest="200"
+                HorizontalOptions="Center" />
+
+            <Label
+                Text="Welcome to Secure Password Manager"
+                SemanticProperties.HeadingLevel="Level1"
+                FontSize="32"
+                HorizontalOptions="Center" />
+
+            <Frame BorderColor="LightGray" CornerRadius="5" Padding="10">
+                <VerticalStackLayout Spacing="10">
+                    <Entry x:Name="UsernameEntry" 
+                           Placeholder="Enter Username" />
+                    <Entry x:Name="MasterPasswordEntry" 
+                           Placeholder="Enter Master Password" 
+                           IsPassword="True"
+                           TextChanged="OnMasterPasswordTextChanged"/>
+                    <Label x:Name="PasswordRequirementsLabel" 
+                           Text="Password requirements:" 
+                           FontSize="Small" 
+                           TextColor="Gray"/>
+                    <Button
+                        x:Name="LoginButton"
+                        Text="Login"
+                        SemanticProperties.Hint="Logs you into the password manager"
+                        Clicked="OnLoginClicked"
+                        HorizontalOptions="Fill" />
+                    <Button
+                        x:Name="CreateAccountButton"
+                        Text="Create Account"
+                        SemanticProperties.Hint="Creates a new account for the password manager"
+                        Clicked="OnCreateAccountClicked"
+                        HorizontalOptions="Fill" />
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
