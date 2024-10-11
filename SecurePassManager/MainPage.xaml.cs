@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using SecurePassManager.Services;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 
 namespace SecurePassManager;
 
@@ -31,7 +34,29 @@ public partial class MainPage : ContentPage
 
     private void UpdatePasswordRequirements(string password)
     {
-        // ... (keep existing code)
+        var requirements = new List<string>();
+
+        if (password.Length < 12)
+            requirements.Add("At least 12 characters long");
+        if (!password.Any(char.IsUpper))
+            requirements.Add("At least one uppercase letter");
+        if (!password.Any(char.IsLower))
+            requirements.Add("At least one lowercase letter");
+        if (!password.Any(char.IsDigit))
+            requirements.Add("At least one number");
+        if (!password.Any(ch => !char.IsLetterOrDigit(ch)))
+            requirements.Add("At least one special character");
+
+        if (requirements.Count > 0)
+        {
+            PasswordRequirementsLabel.Text = "Password must have:\n" + string.Join("\n", requirements.Select(r => "• " + r));
+            PasswordRequirementsLabel.TextColor = Colors.Red;
+        }
+        else
+        {
+            PasswordRequirementsLabel.Text = "Password meets all requirements";
+            PasswordRequirementsLabel.TextColor = Colors.Green;
+        }
     }
 
     private async void OnLoginClicked(object sender, EventArgs e)

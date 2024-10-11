@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SecurePassManager")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+516325fde645827ba85d4e2a8e62c1da3e697f51")]
 [assembly: System.Reflection.AssemblyProductAttribute("SecurePassManager")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SecurePassManager")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
