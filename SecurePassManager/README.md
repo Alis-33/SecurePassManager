@@ -152,4 +152,4 @@ These cryptographic choices reflect standard security practices in terms of algo
 
 6. **Key Handling Improvements**: Future versions should implement master password-based key derivation instead of storing encryption keys.
 
-This application represents a basic password management solution with encryption. While it provides protection against casual access and network-based attacks, significant security improvements would be needed for production use, particularly in the handling of encryption keys.
+This application represents a basic password management solution with encryption. While it provides protection against casual access, significant security improvements would be needed for production use, particularly in the handling of encryption keys.
