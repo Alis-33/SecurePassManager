@@ -1,1 +1,0 @@
--v --force --timestamp=none --sign - --entitlements /Users/alis/RiderProjects/SecurePassManager/SecurePassManager/obj/Debug/net8.0-maccatalyst/maccatalyst-arm64/Entitlements.xcent /Users/alis/RiderProjects/SecurePassManager/SecurePassManager/bin/Debug/net8.0-maccatalyst/maccatalyst-arm64/SecurePassManager.app

@@ -1,6 +1,6 @@
 # SecurePassManager
 
-SecurePassManager is a robust, multi-user password management application developed using .NET MAUI. It provides a secure way to store and manage passwords across different platforms.
+SecurePassManager is a multi-user password management application developed using .NET MAUI. It provides a secure way to store and manage passwords across different platforms.
 
 ## Table of Contents
 
@@ -17,23 +17,24 @@ SecurePassManager is a robust, multi-user password management application develo
 - Multi-user support with individual encrypted password storage
 - Strong password generation
 - Password strength meter
-- Cross-platform compatibility (Windows, macOS, iOS, Android)
+- Cross-platform compatibility (Windows, macOS)
 - Encrypted local storage of passwords
 - User-friendly interface for managing passwords
 
 ## Security Model
 
-SecurePassManager employs a robust security model to protect user data:
+SecurePassManager employs the following security model:
 
-1. **User Authentication**: Each user has a unique username and master password. The master password is never stored directly; instead, it's used to derive a key for encrypting and decrypting the user's passwords.
+1. **User Authentication**: Each user has a unique username and master password. The master password is used for authentication into the application.
 
 2. **Password Storage**: All passwords are stored in an encrypted format using AES-256 encryption in CBC mode with PKCS7 padding.
 
-3. **Key Derivation**: PBKDF2 with SHA-256 is used for key derivation, with 100,000 iterations and a unique salt for each user.
+3. **Key Handling**: The application uses a stored encryption key and salt for data protection. These are generated during installation and stored in separate files.
 
-4. **Local Storage**: Encrypted data is stored locally on the device, reducing the risk of remote attacks.
-
-5. **Encryption Key Handling**: A unique encryption key is generated for each installation of the app and stored securely in the app's protected storage area.
+4. **Local Storage**: All data is stored locally on the device in three main files:
+    - users.json: Contains encrypted password data
+    - encryption.key: Contains the encryption key
+    - encryption.salt: Contains the salt value
 
 ## Setup Instructions
 
@@ -75,9 +76,9 @@ dotnet build
 
 ### From Visual Studio:
 
-1. Set the startup project to `SecurePassManager`.
-2. Select your target platform (Windows, macOS, iOS, or Android).
-3. Click the "Run" button or press F5.
+1. Set the startup project to `SecurePassManager`
+2. Select your target platform (Windows or macOS)
+3. Click the "Run" button or press F5
 
 ### From Command Line:
 
@@ -91,8 +92,6 @@ To run on macOS:
 dotnet run --project SecurePassManager -f net8.0-maccatalyst
 ```
 
-For iOS and Android, you'll need to use the respective emulators or connect a physical device.
-
 ## Screenshots
 
 ### Home Page
@@ -104,31 +103,40 @@ For iOS and Android, you'll need to use the respective emulators or connect a ph
 
 ### Threat Model
 
-SecurePassManager is designed to protect against several threat actors:
+The current implementation provides protection against:
 
-1. **Malicious users with physical access to the device**: The app protects against unauthorized access even if someone gains physical access to the device.
+1. **Basic Unauthorized Access**: Password data is encrypted rather than stored in plaintext.
 2. **Network-based attackers**: As the app uses local storage, it's not vulnerable to remote network attacks.
-3. **Malware on the user's device**: While no app can be completely secure against malware with full system access, our encryption model provides a strong barrier.
+3. **Casual system access**: The application requires authentication to access stored passwords.
 
 ### Cryptographic Decisions
 
-1. **AES-256 for Encryption**: We chose AES-256 as it's widely recognized as a secure symmetric encryption algorithm, approved by the US National Institute of Standards and Technology (NIST).
+1. **AES-256 for Encryption**: The application employs AES-256 encryption as implemented through .NET cryptographic libraries. This choice was made due to AES-256's standing as a NIST-approved standard and its proven track record in providing strong security while maintaining reasonable performance across different platforms. The implementation uses the standard 128-bit block size alongside the 256-bit key length.
 
-2. **CBC Mode**: Cipher Block Chaining (CBC) mode is used to provide dependence between encrypted blocks, making the encryption more robust against certain types of attacks.
+2. **CBC Mode**: Cipher Block Chaining mode was selected as the encryption mode because it ensures each encryption block depends on the previous one. This dependency makes the encryption more robust by preventing pattern recognition in the encrypted data, as identical plaintext blocks will encrypt to different ciphertext blocks. The implementation includes PKCS7 padding to handle the last block appropriately.
 
-3. **PBKDF2 for Key Derivation**: PBKDF2 is used with 100,000 iterations to derive encryption keys from user passwords. This makes brute-force attacks computationally expensive.
+3. **PBKDF2 for Key Operations**: The application uses PBKDF2 in two distinct ways. In the encryption service, it runs with 100,000 iterations to derive encryption keys from the stored master key. The master password service uses a higher iteration count of 210,000 for hashing user passwords. This dual implementation reflects the different security needs of key derivation versus password hashing, though both make brute-force attempts computationally expensive.
 
-4. **SHA-256**: Used as the hash function in PBKDF2, SHA-256 is collision-resistant and provides a good balance between security and performance.
+4. **Salt Usage and Storage**: The current implementation maintains two separate salting mechanisms. For password encryption, a single salt is stored in encryption.salt and used across all encryption operations. For user authentication, each user has their own unique salt stored alongside their password hash. While this provides some protection against rainbow table attacks, storing the encryption salt separately from the encrypted data introduces security risks.
 
-5. **Unique Salt per User**: Each user has a unique salt, preventing rainbow table attacks and ensuring that even if two users have the same password, their encrypted data will be different.
+5. **Key Management**: The application generates and stores its main encryption key in a separate file during first launch. This key, combined with the stored salt, serves as the basis for all password encryption operations through PBKDF2 key derivation. While this approach simplifies the implementation and provides consistent encryption across sessions, storing the key separately makes the encrypted data vulnerable if an attacker gains access to all application files.
 
+These cryptographic choices reflect standard security practices in terms of algorithm selection, but the current implementation of key and salt storage could be improved to better protect against physical access to the application's files.
 ### Security Considerations
 
-1. **Local Storage**: By storing data locally, we reduce the attack surface compared to cloud-based solutions. However, this means users are responsible for their own backups.
+1. **Local Storage**: By storing data locally, the attack surface is reduced compared to cloud-based solutions. However, this means users are responsible for their own backups.
 
-2. **Master Password**: The security of the system heavily relies on the strength of the user's master password. We implement a password strength meter to encourage strong passwords.
+2. **Master Password**: While a password strength meter is implemented to encourage strong passwords, the master password is currently used only for authentication and not for data encryption.
 
-3. **Memory Protection**: We've taken care to minimize the time sensitive data (like decrypted passwords) stays in memory, but perfect memory protection is challenging in managed code environments.
+3. **Memory Protection**: The application uses standard .NET memory management. Like other managed code environments, implementing perfect memory protection for sensitive data remains challenging.
+### Implementation Limitations
+
+1. **Key Storage**: The current implementation stores encryption keys and salt in separate files, which makes the encrypted data vulnerable if an attacker gains access to all local files.
+   
+   1.1. Instead of storing encryption keys in files, we could derive them from the user's master password. Each user's data would be encrypted with a unique key derived from their master password
+2. **Authentication vs Encryption**: While the master password is used for authentication, it is not used for encrypting the stored passwords.
+
+3. **Physical Access**: The current implementation doesn't protect against physical access to the device files.
 
 ## Limitations and Future Improvements
 
@@ -142,4 +150,6 @@ SecurePassManager is designed to protect against several threat actors:
 
 5. **Secure Backup**: While users can manually back up the encrypted database file, a more user-friendly, secure backup solution could be implemented.
 
-By addressing these limitations in future versions, we can further enhance the security and usability of SecurePassManager.
+6. **Key Handling Improvements**: Future versions should implement master password-based key derivation instead of storing encryption keys.
+
+This application represents a basic password management solution with encryption. While it provides protection against casual access and network-based attacks, significant security improvements would be needed for production use, particularly in the handling of encryption keys.
