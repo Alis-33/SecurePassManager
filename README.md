@@ -132,7 +132,7 @@ These cryptographic choices reflect standard security practices in terms of algo
 3. **Memory Protection**: The application uses standard .NET memory management. Like other managed code environments, implementing perfect memory protection for sensitive data remains challenging.
 ### Implementation Limitations
 
-1. **Key Storage**: The current implementation stores encryption keys and salt in separate files, which makes the encrypted data vulnerable if an attacker gains access to all local files.
+1. **Key Storage**: The current implementation stores encryption keys and salt in separate files, which makes the encrypted data vulnerable if an attacker gains access to all local files (everything is stored in AppDataDirectory).
    
    1.1. Instead of storing encryption keys in files, we could derive them from the user's master password. Each user's data would be encrypted with a unique key derived from their master password
 2. **Authentication vs Encryption**: While the master password is used for authentication, it is not used for encrypting the stored passwords.
