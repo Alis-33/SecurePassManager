@@ -32,7 +32,8 @@ SecurePassManager employs the following security model:
 3. **Key Handling**: The application uses a stored encryption key and salt for data protection. These are generated during installation and stored in separate files.
 
 4. **Local Storage**: All data is stored locally on the device in three main files:
-    - users.json: Contains encrypted password data
+    - users.json: Contains encrypted user data
+    - passwords.json: stores the encrypted password entries
     - encryption.key: Contains the encryption key
     - encryption.salt: Contains the salt value
 
