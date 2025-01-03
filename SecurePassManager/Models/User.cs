@@ -5,8 +5,8 @@ namespace SecurePassManager.Models
     public class User
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
-        public required string Username { get; set; }
-        public required string PasswordHash { get; set; }
-        public required string Salt { get; set; }
+        public string Username { get; set; }
+        public string EncryptedCredentials { get; set; }
+        public string CredentialsSalt { get; set; }
     }
 }

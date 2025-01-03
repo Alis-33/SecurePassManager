@@ -25,7 +25,7 @@ SecurePassManager is a multi-user password management application developed usin
 
 SecurePassManager employs the following security model:
 
-1. **User Authentication**: Each user has a unique username and master password. The master password is used for authentication into the application.
+1. **User Authentication**: Each user has a unique username and master password. The master password is used both for authentication and for encrypting the user's credentials. Each user's password hash and salt are encrypted with a key derived from their master password, ensuring that even if an attacker gains access to the stored data, they cannot impersonate other users without knowing their master passwords.
 
 2. **Password Storage**: All passwords are stored in an encrypted format using AES-256 encryption in CBC mode with PKCS7 padding.
 
@@ -115,11 +115,17 @@ The current implementation provides protection against:
 
 2. **CBC Mode**: Cipher Block Chaining mode was selected as the encryption mode because it ensures each encryption block depends on the previous one. This dependency makes the encryption more robust by preventing pattern recognition in the encrypted data, as identical plaintext blocks will encrypt to different ciphertext blocks. The implementation includes PKCS7 padding to handle the last block appropriately.
 
-3. **PBKDF2 for Key Operations**: The application uses PBKDF2 in two distinct ways. In the encryption service, it runs with 100,000 iterations to derive encryption keys from the stored master key. The master password service uses a higher iteration count of 210,000 for hashing user passwords. This dual implementation reflects the different security needs of key derivation versus password hashing, though both make brute-force attempts computationally expensive.
+3. **User Credential Protection**: Each user's password hash and salt are encrypted using AES with a unique key derived from their master password using PBKDF2 (210,000 iterations). This ensures that even if an attacker gains access to the users.json file, they cannot swap or reuse encrypted credentials between users, as the credentials can only be decrypted with the original user's master password. The system uses:
+   - A unique salt for each user's credential encryption
+   - PBKDF2 with SHA-256 for key derivation
+   - AES encryption with a randomly generated IV for each encryption operation
+   - The encrypted data combines the IV with the ciphertext for secure storage
 
-4. **Salt Usage and Storage**: The current implementation maintains two separate salting mechanisms. For password encryption, a single salt is stored in encryption.salt and used across all encryption operations. For user authentication, each user has their own unique salt stored alongside their password hash. While this provides some protection against rainbow table attacks, storing the encryption salt separately from the encrypted data introduces security risks.
+4. **PBKDF2 for Key Operations**: The application uses PBKDF2 in two distinct ways. In the encryption service, it runs with 100,000 iterations to derive encryption keys from the stored master key. The master password service uses a higher iteration count of 210,000 for hashing user passwords. This dual implementation reflects the different security needs of key derivation versus password hashing, though both make brute-force attempts computationally expensive.
 
-5. **Key Management**: The application generates and stores its main encryption key in a separate file during first launch. This key, combined with the stored salt, serves as the basis for all password encryption operations through PBKDF2 key derivation. While this approach simplifies the implementation and provides consistent encryption across sessions, storing the key separately makes the encrypted data vulnerable if an attacker gains access to all application files.
+5. **Salt Usage and Storage**: The current implementation maintains two separate salting mechanisms. For password encryption, a single salt is stored in encryption.salt and used across all encryption operations. For user authentication, each user has their own unique salt stored alongside their password hash. While this provides some protection against rainbow table attacks, storing the encryption salt separately from the encrypted data introduces security risks.
+
+6. **Key Management**: The application generates and stores its main encryption key in a separate file during first launch. This key, combined with the stored salt, serves as the basis for all password encryption operations through PBKDF2 key derivation. While this approach simplifies the implementation and provides consistent encryption across sessions, storing the key separately makes the encrypted data vulnerable if an attacker gains access to all application files.
 
 These cryptographic choices reflect standard security practices in terms of algorithm selection, but the current implementation of key and salt storage could be improved to better protect against physical access to the application's files.
 ### Security Considerations
@@ -131,12 +137,7 @@ These cryptographic choices reflect standard security practices in terms of algo
 3. **Memory Protection**: The application uses standard .NET memory management. Like other managed code environments, implementing perfect memory protection for sensitive data remains challenging.
 ### Implementation Limitations
 
-1. **Key Storage**: The current implementation stores encryption keys and salt in separate files, which makes the encrypted data vulnerable if an attacker gains access to all local files.
-   
-   1.1. Instead of storing encryption keys in files, we could derive them from the user's master password. Each user's data would be encrypted with a unique key derived from their master password
-2. **Authentication vs Encryption**: While the master password is used for authentication, it is not used for encrypting the stored passwords.
-
-3. **Physical Access**: The current implementation doesn't protect against physical access to the device files.
+1. **Physical Access**: The current implementation doesn't protect against physical access to the device files.
 
 ## Limitations and Future Improvements
 
@@ -150,6 +151,4 @@ These cryptographic choices reflect standard security practices in terms of algo
 
 5. **Secure Backup**: While users can manually back up the encrypted database file, a more user-friendly, secure backup solution could be implemented.
 
-6. **Key Handling Improvements**: Future versions should implement master password-based key derivation instead of storing encryption keys.
-
-This application represents a basic password management solution with encryption. While it provides protection against casual access and network-based attacks, significant security improvements would be needed for production use, particularly in the handling of encryption keys.
+This application represents a basic password management solution with encryption. While it provides protection against casual access and network-based attacks, security improvements would be needed for production use, particularly in the handling of encryption keys.
