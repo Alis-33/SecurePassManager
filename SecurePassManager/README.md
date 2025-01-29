@@ -1,5 +1,3 @@
-SecurePassManager README body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; padding: 20px; background-color: #f4f4f4; } h1, h2, h3 { color: #333; } code { background: #eee; padding: 2px 5px; border-radius: 3px; } pre { background: #333; color: #fff; padding: 10px; border-radius: 5px; overflow-x: auto; }
-
 # SecurePassManager
 
 SecurePassManager is a multi-user password management application developed using .NET MAUI. It provides a **secure** and **cross-platform** way to store and manage passwords.
