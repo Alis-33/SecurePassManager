@@ -1,154 +1,119 @@
+SecurePassManager README body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; padding: 20px; background-color: #f4f4f4; } h1, h2, h3 { color: #333; } code { background: #eee; padding: 2px 5px; border-radius: 3px; } pre { background: #333; color: #fff; padding: 10px; border-radius: 5px; overflow-x: auto; }
+
 # SecurePassManager
 
-SecurePassManager is a multi-user password management application developed using .NET MAUI. It provides a secure way to store and manage passwords across different platforms.
+SecurePassManager is a multi-user password management application developed using .NET MAUI. It provides a **secure** and **cross-platform** way to store and manage passwords.
 
 ## Table of Contents
 
-1. [Features](#features)
-2. [Security Model](#security-model)
-3. [Setup Instructions](#setup-instructions)
-4. [Running the Application](#running-the-application)
-5. [Screenshots](#screenshots)
-6. [Security Discussion](#security-discussion)
-7. [Limitations and Future Improvements](#limitations-and-future-improvements)
+*   [Features](#features)
+*   [Security Model](#security-model)
+*   [Setup Instructions](#setup-instructions)
+*   [Running the Application](#running-the-application)
+*   [Screenshots](#screenshots)
+*   [Security Discussion](#security-discussion)
+*   [Limitations and Future Improvements](#limitations-and-future-improvements)
 
 ## Features
 
-- Multi-user support with individual encrypted password storage
-- Strong password generation
-- Password strength meter
-- Cross-platform compatibility (Windows, macOS)
-- Encrypted local storage of passwords
-- User-friendly interface for managing passwords
+*   Multi-user support with individually encrypted password storage
+*   PBKDF2-based encryption key derivation
+*   AES-256 encryption for password storage
+*   Random IV per encryption operation for added security
+*   Secure master password authentication
+*   Strong password generation & strength meter
+*   Cross-platform compatibility (Windows, macOS)
+*   Encrypted local storage of passwords
+*   User-friendly interface for managing passwords
 
 ## Security Model
 
-SecurePassManager employs the following security model:
-
-1. **User Authentication**: Each user has a unique username and master password. The master password is used both for authentication and for encrypting the user's credentials. Each user's password hash and salt are encrypted with a key derived from their master password, ensuring that even if an attacker gains access to the stored data, they cannot impersonate other users without knowing their master passwords.
-
-2. **Password Storage**: All passwords are stored in an encrypted format using AES-256 encryption in CBC mode with PKCS7 padding.
-
-3. **Key Handling**: The application uses a stored encryption key and salt for data protection. These are generated during installation and stored in separate files.
-
-4. **Local Storage**: All data is stored locally on the device in three main files:
-    - users.json: Contains encrypted password data
-    - encryption.key: Contains the encryption key
-    - encryption.salt: Contains the salt value
+*   **Master Password-Based Encryption:** Each user has a unique master password, which is used to derive a strong encryption key using PBKDF2 with 100,000 iterations.
+*   **Encrypted Password Storage:** User passwords are encrypted using AES-256 in CBC mode with PKCS7 padding.
+*   **Key Management:** No encryption key is stored on disk—keys are derived at runtime from the master password.
+*   **Local Storage Security:** Encrypted files are stored in users.json, passwords.dat, and encryption.salt.
 
 ## Setup Instructions
 
 ### Prerequisites
 
-- .NET 8.0 SDK or later
-- Visual Studio 2022 or JetBrains Rider (for development)
+*   .NET 8.0 SDK or later
+*   Visual Studio 2022 or JetBrains Rider (for development)
 
 ### Clone the Repository
 
-```bash
+```
 git clone https://github.com/Alis-33/SecurePassManager.git
 cd SecurePassManager
 ```
 
 ### Setup the Development Environment
 
-1. Ensure you have the .NET MAUI workload installed:
-
-```bash
+```
 dotnet workload install maui
-```
-
-2. Open the solution in Visual Studio or Rider.
-
-3. Restore NuGet packages:
-
-```bash
 dotnet restore
-```
-
-4. Build the solution:
-
-```bash
 dotnet build
 ```
 
 ## Running the Application
 
-### From Visual Studio:
+### From Visual Studio
 
-1. Set the startup project to `SecurePassManager`
-2. Select your target platform (Windows or macOS)
-3. Click the "Run" button or press F5
+1.  Set the startup project to `SecurePassManager`
+2.  Select your target platform (Windows or macOS)
+3.  Click "Run" or press `F5`
 
-### From Command Line:
+### From Command Line
 
 To run on Windows:
-```bash
+
+```
 dotnet run --project SecurePassManager
 ```
 
 To run on macOS:
-```bash
+
+```
 dotnet run --project SecurePassManager -f net8.0-maccatalyst
 ```
 
 ## Screenshots
 
-### Home Page
-![Alt text](https://i.imgur.com/vDBp03r.png "Home Page")
-### Saved Password
-![Alt text](https://i.imgur.com/eSYiwqD.png "Home Page")
+**Home Page**
+
+![Home Page](https://i.imgur.com/vDBp03r.png)
+
+**Saved Password**
+
+![Saved Password](https://i.imgur.com/eSYiwqD.png)
 
 ## Security Discussion
 
 ### Threat Model
 
-The current implementation provides protection against:
-
-1. **Basic Unauthorized Access**: Password data is encrypted rather than stored in plaintext.
-2. **Network-based attackers**: As the app uses local storage, it's not vulnerable to remote network attacks.
-3. **Casual system access**: The application requires authentication to access stored passwords.
+*   Passwords are AES-encrypted and cannot be accessed without the master password.
+*   Brute force attacks are mitigated with PBKDF2 (100,000 iterations).
+*   Random IV ensures pattern analysis protection.
 
 ### Cryptographic Decisions
 
-1. **AES-256 for Encryption**: The application employs AES-256 encryption as implemented through .NET cryptographic libraries. This choice was made due to AES-256's standing as a NIST-approved standard and its proven track record in providing strong security while maintaining reasonable performance across different platforms. The implementation uses the standard 128-bit block size alongside the 256-bit key length.
-
-2. **CBC Mode**: Cipher Block Chaining mode was selected as the encryption mode because it ensures each encryption block depends on the previous one. This dependency makes the encryption more robust by preventing pattern recognition in the encrypted data, as identical plaintext blocks will encrypt to different ciphertext blocks. The implementation includes PKCS7 padding to handle the last block appropriately.
-
-3. **User Credential Protection**: Each user's password hash and salt are encrypted using AES with a unique key derived from their master password using PBKDF2 (210,000 iterations). This ensures that even if an attacker gains access to the users.json file, they cannot swap or reuse encrypted credentials between users, as the credentials can only be decrypted with the original user's master password. The system uses:
-   - A unique salt for each user's credential encryption
-   - PBKDF2 with SHA-256 for key derivation
-   - AES encryption with a randomly generated IV for each encryption operation
-   - The encrypted data combines the IV with the ciphertext for secure storage
-
-4. **PBKDF2 for Key Operations**: The application uses PBKDF2 in two distinct ways. In the encryption service, it runs with 100,000 iterations to derive encryption keys from the stored master key. The master password service uses a higher iteration count of 210,000 for hashing user passwords. This dual implementation reflects the different security needs of key derivation versus password hashing, though both make brute-force attempts computationally expensive.
-
-5. **Salt Usage and Storage**: The current implementation maintains two separate salting mechanisms. For password encryption, a single salt is stored in encryption.salt and used across all encryption operations. For user authentication, each user has their own unique salt stored alongside their password hash. While this provides some protection against rainbow table attacks, storing the encryption salt separately from the encrypted data introduces security risks.
-
-6. **Key Management**: The application generates and stores its main encryption key in a separate file during first launch. This key, combined with the stored salt, serves as the basis for all password encryption operations through PBKDF2 key derivation. While this approach simplifies the implementation and provides consistent encryption across sessions, storing the key separately makes the encrypted data vulnerable if an attacker gains access to all application files.
-
-These cryptographic choices reflect standard security practices in terms of algorithm selection, but the current implementation of key and salt storage could be improved to better protect against physical access to the application's files.
-### Security Considerations
-
-1. **Local Storage**: By storing data locally, the attack surface is reduced compared to cloud-based solutions. However, this means users are responsible for their own backups.
-
-2. **Master Password**: While a password strength meter is implemented to encourage strong passwords, the master password is currently used only for authentication and not for data encryption.
-
-3. **Memory Protection**: The application uses standard .NET memory management. Like other managed code environments, implementing perfect memory protection for sensitive data remains challenging.
-### Implementation Limitations
-
-1. **Physical Access**: The current implementation doesn't protect against physical access to the device files.
+*   **PBKDF2 for Key Derivation:** Master password-derived encryption key using SHA-256 with 100,000 iterations.
+*   **AES-256 Encryption:** Each password entry is encrypted separately with CBC mode.
+*   **Random IV Generation:** A new IV is generated per encryption operation.
+*   **User Credential Protection:** User hashed passwords are encrypted using AES.
 
 ## Limitations and Future Improvements
 
-1. **Lack of Remote Sync**: Currently, the app doesn't support syncing across devices. This could be added in the future with end-to-end encryption.
+*   No Cloud Syncing - Currently, passwords cannot be synced across devices.
+*   No Two-Factor Authentication (2FA) - Adding 2FA would further improve authentication security.
+*   No Biometric Authentication - Face ID/Touch ID support is not yet implemented.
+*   Secure Backup Needed - Users must manually backup encrypted password files.
 
-2. **No Two-Factor Authentication**: Adding 2FA would provide an extra layer of security.
+## Final Notes
 
-3. **Limited Password Sharing**: The current version doesn't support secure password sharing between users.
+*    No stored keys
+*    PBKDF2 key derivation
+*    AES-256 with CBC mode & random IV
+*    100,000 PBKDF2 iterations to prevent brute-force attacks
 
-4. **Audit Logging**: Implementing a secure audit log could help users track access to their passwords.
-
-5. **Secure Backup**: While users can manually back up the encrypted database file, a more user-friendly, secure backup solution could be implemented.
-
-This application represents a basic password management solution with encryption. While it provides protection against casual access and network-based attacks, security improvements would be needed for production use, particularly in the handling of encryption keys.
+This updated security model ensures that even if an attacker gains access to the stored files, they cannot decrypt the passwords without the correct master password.

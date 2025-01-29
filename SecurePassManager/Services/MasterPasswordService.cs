@@ -34,7 +34,7 @@ namespace SecurePassManager.Services
                 var credentialsSalt = Convert.FromBase64String(user.CredentialsSalt);
                 var decryptedCredentials = DecryptCredentials(user.EncryptedCredentials, password, credentialsSalt);
                 var credentials = JsonSerializer.Deserialize<UserCredentials>(decryptedCredentials);
-                
+
                 var hashedPassword = HashPassword(password, credentials.Salt);
                 return hashedPassword == credentials.PasswordHash;
             }
@@ -61,7 +61,7 @@ namespace SecurePassManager.Services
                 PasswordHash = hashedPassword,
                 Salt = Convert.ToBase64String(passwordSalt)
             };
-            
+
             var credentialsJson = JsonSerializer.Serialize(credentials);
             var credentialsSalt = GenerateSalt();
             var encryptedCredentials = EncryptCredentials(credentialsJson, password, credentialsSalt);
@@ -84,10 +84,10 @@ namespace SecurePassManager.Services
             using var aes = Aes.Create();
             var key = DeriveKey(password, salt);
             aes.Key = key;
-            aes.GenerateIV();
+            aes.GenerateIV(); // Generate a random IV for each encryption
 
             using var ms = new MemoryStream();
-            ms.Write(aes.IV, 0, aes.IV.Length);
+            ms.Write(aes.IV, 0, aes.IV.Length); // Prepend IV to the ciphertext
 
             using (var cryptoStream = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
             using (var writer = new StreamWriter(cryptoStream))
@@ -103,13 +103,13 @@ namespace SecurePassManager.Services
             var cipherBytes = Convert.FromBase64String(encryptedCredentials);
             using var aes = Aes.Create();
             var key = DeriveKey(password, salt);
-            
+
             var iv = new byte[aes.BlockSize / 8];
             var cipher = new byte[cipherBytes.Length - iv.Length];
-            
+
             Buffer.BlockCopy(cipherBytes, 0, iv, 0, iv.Length);
             Buffer.BlockCopy(cipherBytes, iv.Length, cipher, 0, cipher.Length);
-            
+
             aes.Key = key;
             aes.IV = iv;
 
@@ -117,24 +117,25 @@ namespace SecurePassManager.Services
             using var decryptor = aes.CreateDecryptor();
             using var cryptoStream = new CryptoStream(ms, decryptor, CryptoStreamMode.Read);
             using var reader = new StreamReader(cryptoStream);
-            
+
             return reader.ReadToEnd();
         }
 
         private byte[] DeriveKey(string password, byte[] salt)
         {
-            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 210000, HashAlgorithmName.SHA256);
-            return pbkdf2.GetBytes(32);
+            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 100_000, HashAlgorithmName.SHA256);
+            return pbkdf2.GetBytes(32); // Derive a 256-bit key
         }
 
         private string HashPassword(string password, string salt)
         {
             using var pbkdf2 = new Rfc2898DeriveBytes(
-                password, 
-                Convert.FromBase64String(salt), 
-                210000, 
-                HashAlgorithmName.SHA256);
-            
+                password,
+                Convert.FromBase64String(salt),
+                100_000,
+                HashAlgorithmName.SHA256
+            );
+
             return Convert.ToBase64String(pbkdf2.GetBytes(32));
         }
 

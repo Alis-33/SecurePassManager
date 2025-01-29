@@ -14,37 +14,46 @@ public partial class PasswordListPage : ContentPage
     private readonly PasswordStorageService _passwordStorageService;
     private readonly IServiceProvider _serviceProvider;
     private string _currentUserId;
+    private string _masterPassword; // Store the master password
 
     public PasswordListPage(PasswordStorageService passwordStorageService, IServiceProvider serviceProvider)
     {
         InitializeComponent();
         _passwordStorageService = passwordStorageService;
         _serviceProvider = serviceProvider;
-        
-        
+
         Debug.WriteLine("PasswordListPage constructor called");
     }
 
-    public void SetUser(string userId)
+    public void Initialize(string userId, string masterPassword)
     {
-        Debug.WriteLine($"SetUser called with userId: {userId}");
+        Debug.WriteLine($"Initialize called with userId: {userId} and masterPassword provided");
 
         _currentUserId = userId;
+        _masterPassword = masterPassword; // Set the master password
         LoadPasswords();
     }
 
     private void LoadPasswords()
     {
         Debug.WriteLine($"LoadPasswords called for userId: {_currentUserId}");
-        var passwords = _passwordStorageService.GetAllPasswords(_currentUserId);
-        Debug.WriteLine($"Number of passwords loaded: {passwords.Count()}");
-        PasswordCollectionView.ItemsSource = passwords;
+        try
+        {
+            var passwords = _passwordStorageService.GetAllPasswords(_currentUserId, _masterPassword);
+            Debug.WriteLine($"Number of passwords loaded: {passwords.Count()}");
+            PasswordCollectionView.ItemsSource = passwords;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error loading passwords: {ex.Message}");
+            DisplayAlert("Error", "Failed to load passwords. Please check your master password.", "OK");
+        }
     }
 
     private async void OnAddPasswordClicked(object sender, EventArgs e)
     {
         var passwordEntryPage = _serviceProvider.GetRequiredService<PasswordEntryPage>();
-        passwordEntryPage.SetUser(_currentUserId);
+        passwordEntryPage.Initialize(_currentUserId, _masterPassword); // Pass user ID and master password
         await Navigation.PushAsync(passwordEntryPage);
     }
 
@@ -70,7 +79,7 @@ public partial class PasswordListPage : ContentPage
     private async Task NavigateToPasswordEntryPage(PasswordEntry password)
     {
         var passwordEntryPage = _serviceProvider.GetRequiredService<PasswordEntryPage>();
-        passwordEntryPage.SetUser(_currentUserId);
+        passwordEntryPage.Initialize(_currentUserId, _masterPassword); // Pass user ID and master password
         passwordEntryPage.SetPasswordEntry(password);
         await Navigation.PushAsync(passwordEntryPage);
     }

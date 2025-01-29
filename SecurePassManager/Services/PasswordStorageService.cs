@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using SecurePassManager.Models;
 
@@ -17,23 +16,23 @@ namespace SecurePassManager.Services
         {
             _encryptionService = encryptionService;
             _filePath = filePath;
-            LoadPasswords();
         }
-        public void AddPassword(string userId, PasswordEntry entry)
+
+        public void AddPassword(string userId, PasswordEntry entry, string masterPassword)
         {
             if (!_userPasswords.ContainsKey(userId))
             {
                 _userPasswords[userId] = new List<PasswordEntry>();
             }
             _userPasswords[userId].Add(entry);
-            SavePasswords();
+            SavePasswords(masterPassword);
         }
 
-        public void UpdatePassword(string userId, PasswordEntry entry)
+        public void UpdatePassword(string userId, PasswordEntry entry, string masterPassword)
         {
             if (_userPasswords.ContainsKey(userId))
             {
-                var existingEntry = _userPasswords[userId].FirstOrDefault(p => p.Id == entry.Id);
+                var existingEntry = _userPasswords[userId].Find(p => p.Id == entry.Id);
                 if (existingEntry != null)
                 {
                     existingEntry.Title = entry.Title;
@@ -41,58 +40,59 @@ namespace SecurePassManager.Services
                     existingEntry.Password = entry.Password;
                     existingEntry.Website = entry.Website;
                     existingEntry.UpdatedAt = DateTime.UtcNow;
-                    SavePasswords();
+                    SavePasswords(masterPassword);
                 }
             }
         }
 
-        public void DeletePassword(string userId, string id)
+        public void DeletePassword(string userId, string id, string masterPassword)
         {
             if (_userPasswords.ContainsKey(userId))
             {
                 _userPasswords[userId].RemoveAll(p => p.Id == id);
-                SavePasswords();
+                SavePasswords(masterPassword);
             }
         }
 
-        public PasswordEntry GetPassword(string userId, string id)
+        public PasswordEntry GetPassword(string userId, string id, string masterPassword)
         {
-            return _userPasswords.ContainsKey(userId) 
-                ? _userPasswords[userId].FirstOrDefault(p => p.Id == id) 
+            LoadPasswords(masterPassword);
+            return _userPasswords.ContainsKey(userId)
+                ? _userPasswords[userId].Find(p => p.Id == id)
                 : null;
         }
 
-        public IEnumerable<PasswordEntry> GetAllPasswords(string userId)
+        public IEnumerable<PasswordEntry> GetAllPasswords(string userId, string masterPassword)
         {
-            return _userPasswords.ContainsKey(userId) 
-                ? _userPasswords[userId].ToList() 
+            LoadPasswords(masterPassword);
+            return _userPasswords.ContainsKey(userId)
+                ? _userPasswords[userId].ToList()
                 : new List<PasswordEntry>();
         }
 
-        private void LoadPasswords()
+        private void LoadPasswords(string masterPassword)
         {
             if (File.Exists(_filePath))
             {
                 try
                 {
                     string encryptedJson = File.ReadAllText(_filePath);
-                    string decryptedJson = _encryptionService.Decrypt(encryptedJson);
-                    _userPasswords = JsonSerializer.Deserialize<Dictionary<string, List<PasswordEntry>>>(decryptedJson) 
-                                     ?? new Dictionary<string, List<PasswordEntry>>();
+                    string decryptedJson = _encryptionService.Decrypt(encryptedJson, masterPassword);
+                    _userPasswords = JsonSerializer.Deserialize<Dictionary<string, List<PasswordEntry>>>(decryptedJson)
+                        ?? new Dictionary<string, List<PasswordEntry>>();
                 }
                 catch (Exception ex)
                 {
-                    // Log the error and initialize with an empty dictionary
                     Console.WriteLine($"Error loading passwords: {ex.Message}");
                     _userPasswords = new Dictionary<string, List<PasswordEntry>>();
                 }
             }
         }
 
-        private void SavePasswords()
+        private void SavePasswords(string masterPassword)
         {
             string json = JsonSerializer.Serialize(_userPasswords);
-            string encryptedJson = _encryptionService.Encrypt(json);
+            string encryptedJson = _encryptionService.Encrypt(json, masterPassword);
             File.WriteAllText(_filePath, encryptedJson);
         }
     }

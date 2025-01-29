@@ -63,10 +63,11 @@ public partial class MainPage : ContentPage
     {
         try
         {
+            Console.WriteLine($"AppData Directory: {FileSystem.AppDataDirectory}");
             Debug.WriteLine("Login button clicked");
             string username = UsernameEntry.Text;
             string password = MasterPasswordEntry.Text;
-        
+
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
                 await DisplayAlert("Error", "Username and password cannot be empty", "OK");
@@ -81,7 +82,7 @@ public partial class MainPage : ContentPage
                 _securityLogger.LogLoginAttempt(true, username);
                 Debug.WriteLine("Login successful, navigating to PasswordListPage");
                 var passwordListPage = _serviceProvider.GetRequiredService<PasswordListPage>();
-                passwordListPage.SetUser(username);
+                passwordListPage.Initialize(username, password); // Pass username and master password
                 await Navigation.PushAsync(passwordListPage);
             }
             else
@@ -105,7 +106,7 @@ public partial class MainPage : ContentPage
             Debug.WriteLine("Create Account button clicked");
             string username = UsernameEntry.Text;
             string password = MasterPasswordEntry.Text;
-        
+
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
                 await DisplayAlert("Error", "Username and password cannot be empty", "OK");

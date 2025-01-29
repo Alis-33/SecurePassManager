@@ -14,8 +14,10 @@ public partial class PasswordEntryPage : ContentPage
     private readonly ValidationService _validationService;
     private readonly SecurityLogger _securityLogger;
     private readonly PasswordStrengthService _passwordStrengthService;
+
     private PasswordEntry _currentPassword;
     private string _currentUserId;
+    private string _masterPassword; // Store the master password for encryption/decryption
 
     public PasswordEntryPage(PasswordStorageService passwordStorageService, 
         PasswordGeneratorService passwordGeneratorService, 
@@ -31,9 +33,10 @@ public partial class PasswordEntryPage : ContentPage
         _passwordStrengthService = passwordStrengthService;
     }
 
-    public void SetUser(string userId)
+    public void Initialize(string userId, string masterPassword)
     {
         _currentUserId = userId;
+        _masterPassword = masterPassword; // Set the master password
     }
 
     public void SetPasswordEntry(PasswordEntry passwordEntry)
@@ -119,7 +122,7 @@ public partial class PasswordEntryPage : ContentPage
                 Password = PasswordEntry.Text,
                 Website = WebsiteEntry.Text
             };
-            _passwordStorageService.AddPassword(_currentUserId, _currentPassword);
+            _passwordStorageService.AddPassword(_currentUserId, _currentPassword, _masterPassword);
             _securityLogger.LogPasswordCreated(UsernameEntry.Text);
         }
         else
@@ -128,7 +131,7 @@ public partial class PasswordEntryPage : ContentPage
             _currentPassword.Username = UsernameEntry.Text;
             _currentPassword.Password = PasswordEntry.Text;
             _currentPassword.Website = WebsiteEntry.Text;
-            _passwordStorageService.UpdatePassword(_currentUserId, _currentPassword);
+            _passwordStorageService.UpdatePassword(_currentUserId, _currentPassword, _masterPassword);
             _securityLogger.LogPasswordUpdated(UsernameEntry.Text);
         }
 
@@ -142,7 +145,7 @@ public partial class PasswordEntryPage : ContentPage
             bool answer = await DisplayAlert("Confirm Delete", "Are you sure you want to delete this password?", "Yes", "No");
             if (answer)
             {
-                _passwordStorageService.DeletePassword(_currentUserId, _currentPassword.Id);
+                _passwordStorageService.DeletePassword(_currentUserId, _currentPassword.Id, _masterPassword);
                 _securityLogger.LogPasswordDeleted(_currentPassword.Username);
                 await Navigation.PopAsync();
             }
